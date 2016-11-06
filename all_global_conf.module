@@ -1,0 +1,192 @@
+<?php 
+
+
+/**
+ * Implements hook_user_login().
+ */
+function all_global_conf_user_login(&$edit, $account) {   
+  //session_start();
+    global $user;
+    //dpm($user);
+
+    //get all groups
+
+    $all_groups = og_get_all_group($group_type = 'node');
+    $og_bundles = og_get_all_group_bundle();
+    $og_entities = og_get_all_group_entity(); //print ['node'] only
+    $new_groups_arr = array();
+    $new_groups_arr_details = array();
+    foreach ($all_groups as $key => $value) {
+      $node_details = node_load($value);
+      if($node_details->type == 'country'){
+        $new_groups_arr[] = $value;
+        $new_groups_arr_details[$node_details->title] = $value;
+      }
+
+    }
+
+    // get user groups
+    $user_groups = og_get_groups_by_user($user);
+    $new_user_groups = array();
+    $new_user_groups_details = array();
+
+    foreach ($user_groups['node'] as $key => $value) {
+      $node_details = node_load($value);
+      if($node_details->type == 'country'){
+        $new_user_groups[] = $value;
+        if(in_array('administrator', $user->roles) || in_array('Global Program Manager', $user->roles) || in_array('Country Program Manager',$user->roles) || in_array('Program Manager', $user->roles)){
+          $new_user_groups[] = $value;
+          $new_user_groups_details[$node_details->title] = $value; 
+        }else{
+          
+          if($node_details->title != 'Global'){
+              $new_user_groups[] = $value;
+              $new_user_groups_details[$node_details->title] = $value;
+          }
+        }
+        //dsm($node_details->title);
+      }
+    }
+
+
+
+    // check user credentials
+     if (in_array('administrator', $user->roles)) { //for admin
+        // $isAdmin = variable_set('is_Admin',TRUE); 
+        $_SESSION['is_Admin'] = TRUE;
+     }else if(in_array('Global Program Manager', $user->roles)){ // for global program manager
+        // $isGlobalPM = variable_set('isGlobalPM',TRUE);
+        $_SESSION['isGlobalPM'] = TRUE;
+     }else if(in_array('Country Program Manager', $user->roles)){ // for country program manager
+        // $isCountryPM = variable_set('isCountryPM',TRUE);
+        $_SESSION['isCountryPM'] = TRUE;
+     }else if(in_array('Program Manager', $user->roles)){
+        // $isPM = variable_set('isPM',TRUE);
+        $_SESSION['isPM'] = TRUE;
+     }
+
+    //dsm($new_user_groups); 
+
+    //set global variables
+     $new_groups_arr = array_unique($new_groups_arr);
+     // variable_set('site_countries',$new_groups_arr);
+     $_SESSION['site_countries'] = $new_groups_arr;
+
+     $new_groups_arr_details = array_unique($new_groups_arr_details);
+     // variable_set('site_countries_details',$new_groups_arr_details);
+     $_SESSION['site_countries_details'] = $new_groups_arr_details;
+
+     $new_user_groups = array_unique($new_user_groups);
+     // variable_set('user_countries',$new_user_groups);
+     $_SESSION['user_countries'] = $new_user_groups;
+
+     $new_user_groups_details = array_unique($new_user_groups_details);
+     // variable_set('user_countries_details',$new_user_groups_details);
+     $_SESSION['user_countries_details'] = $new_user_groups_details;
+
+     //dsm(variable_get('site_contries'));
+     //dsm(variable_get('user_countries'));
+     // dsm(variable_get('user_countries'));
+     // dsm(variable_get('user_countries_details'));
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function all_global_conf_menu_alter(&$items) {
+  //session_start();
+  //get user groups from database 
+  // $user_groups = variable_get('user_countries');
+  $user_groups = $_SESSION['user_countries'];
+  $countries = "";
+  $first = TRUE;
+  foreach ($user_groups as $key => $value) {
+    if($first == TRUE){
+      $first = FALSE;
+      $countries .= "og_country_ref=$value"; 
+    }else{
+      $countries .= "&og_country_ref=$value";     
+    }
+  }
+  // link should be like that http://e-entrepreneurs-hub.orangestudio.com:9090/en/node/add/announcement?og_country_ref=460&og_country_ref=461&og_country_ref=463
+
+  // change url for announcement
+  $items['node/add/announcement?'.$countries] = $items['node/add/announcement'];
+  unset($items['node/add/announcement']);
+
+  //change url for survey add-survey / node/add/survey
+  // $items['add-survey?'.$countries] = $items['add-survey'];
+  // unset($items['add-survey']);
+
+  $items['node/add/survey?'.$countries] = $items['node/add/survey'];
+  unset($items['node/add/survey']);
+
+  //change url for success story
+  $items['node/add/success-story?'.$countries] = $items['node/add/success-story'];
+  unset($items['node/add/success-story']);
+
+  //change url for resource
+  $items['node/add/resource?'.$countries] = $items['node/add/resource'];
+  unset($items['node/add/resource']);
+
+  //change url for question / node/add/question
+  // $items['add-question?'.$countries] = $items['add-question'];
+  // unset($items['add-question']);
+
+  $items['node/add/question?'.$countries] = $items['node/add/question'];
+  unset($items['node/add/question']);
+
+  //change url for partner
+  $items['node/add/partner?'.$countries] = $items['node/add/partner'];
+  unset($items['node/add/partner']);
+
+  //change url for h5p content
+  $items['node/add/h5p-content?'.$countries] = $items['node/add/h5p-content'];
+  unset($items['node/add/h5p-content']);
+
+  //change url for add-event / node/add/event
+  // $items['add-event?'.$countries] = $items['add-event'];
+  // unset($items['add-event']);
+
+  $items['node/add/event?'.$countries] = $items['node/add/event'];
+  unset($items['node/add/event']);
+
+  //change url for add-discussion / node/add/discussion
+  // $items['add-discussion?'.$countries] = $items['add-discussion'];
+  // unset($items['add-discussion']);
+
+  $items['node/add/discussion?'.$countries] = $items['node/add/discussion'];
+  unset($items['node/add/discussion']);
+
+  //change url for node/add/course
+  $items['node/add/course?'.$countries] = $items['node/add/course'];
+  unset($items['node/add/course']);
+
+  //change url for node/add/class
+  $items['node/add/class?'.$countries] = $items['node/add/class'];
+  unset($items['node/add/class']);
+
+  //change url for node/add/banner
+  $items['node/add/banner?'.$countries] = $items['node/add/banner'];
+  unset($items['node/add/banner']);
+
+  //change url for submit business idea / node/add/project
+  // $items['submit?'.$countries] = $items['submit'];
+  // unset($items['submit']);
+
+  $items['node/add/project?'.$countries] = $items['node/add/project'];
+  unset($items['node/add/project']);
+
+}
+
+/**
+ * Implements hook_user_logout().
+ */
+function all_global_conf_user_logout($account){
+    session_start();
+    unset($_SESSION['user_countries']);
+    session_unset(); 
+    session_destroy();
+}
+
+?>

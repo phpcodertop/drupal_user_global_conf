@@ -1,0 +1,4 @@
+name = All Site Global configurations
+description = This module adds a diffrent site , user configurations as global variables , where you can reach these variables anywhere in the site . this module is written by : Ahmed Maher Halima "SemiColon"
+core = 7.x 
+version = "7.x-1.1"
